@@ -1,24 +1,30 @@
-# chats/serializers.py
 from rest_framework import serializers
-from .models import User, Message, Conversation
+from .models import User, Conversation, Message
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['user_id', 'username', 'email', 'first_name', 'last_name', 'phone_number', 'role']
+        fields = ['user_id', 'username', 'email', 'role', 'phone_number']
 
 class MessageSerializer(serializers.ModelSerializer):
-    sender = UserSerializer(read_only=True)
+    sender_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Message
-        fields = ['message_id', 'sender', 'conversation', 'message_body', 'sent_at']
+        fields = ['message_id', 'sender', 'sender_name', 'message_body', 'sent_at']
+
+    def get_sender_name(self, obj):
+        return obj.sender.username
 
 class ConversationSerializer(serializers.ModelSerializer):
-    participants = UserSerializer(many=True, read_only=True)
     messages = MessageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Conversation
         fields = ['conversation_id', 'participants', 'messages', 'created_at']
+
+    def validate(self, data):
+        if not data.get('participants'):
+            raise serializers.ValidationError("Conversation must include at least one participant.")
+        return data
 
