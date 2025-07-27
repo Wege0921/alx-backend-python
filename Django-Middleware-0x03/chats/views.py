@@ -11,6 +11,12 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 
+from django.http import HttpResponse
+
+def test_log_view(request):
+    return HttpResponse("Request logged successfully!")
+
+
 class ConversationViewSet(viewsets.ModelViewSet):
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer

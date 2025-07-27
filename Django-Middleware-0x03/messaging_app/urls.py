@@ -16,10 +16,13 @@ Including another URLconf
 # messaging_app/urls.py
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponse
+from chats.views import test_log_view 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('chats.urls')),
     path('api-auth/', include('rest_framework.urls')),
+    path('test-log/', test_log_view),
 ]
 
