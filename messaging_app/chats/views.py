@@ -14,6 +14,22 @@ from .serializers import ConversationSerializer, MessageSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .auth import CustomTokenObtainPairSerializer
 
+from rest_framework import viewsets
+from .models import Message
+from .serializers import MessageSerializer
+from .permissions import IsOwnerOrReadOnly
+
+class MessageViewSet(viewsets.ModelViewSet):
+    serializer_class = MessageSerializer
+    permission_classes = [IsOwnerOrReadOnly]
+
+    def get_queryset(self):
+        return Message.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
