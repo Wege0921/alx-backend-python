@@ -73,7 +73,6 @@ class OffensiveLanguageMiddleware:
         if x_forwarded_for:
             return x_forwarded_for.split(',')[0]
         return request.META.get('REMOTE_ADDR')
-
 from django.http import HttpResponseForbidden
 
 class RolePermissionMiddleware:
@@ -81,18 +80,12 @@ class RolePermissionMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Example: only protect actions under /chat/admin/ or /chat/moderation/
         protected_paths = ['/chat/admin/', '/chat/moderation/']
 
-        # If request matches any protected path, enforce role check
         if any(request.path.startswith(path) for path in protected_paths):
             if not request.user.is_authenticated:
                 return HttpResponseForbidden("403 Forbidden: You must be logged in.")
-
-            # Allow only staff or superusers (admin/moderator)
             if not (request.user.is_staff or request.user.is_superuser):
                 return HttpResponseForbidden("403 Forbidden: Insufficient permissions.")
-
         return self.get_response(request)
-
 
