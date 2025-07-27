@@ -55,7 +55,7 @@ MIDDLEWARE = [
 ]
 LOGIN_URL = '/admin/login/'
 
-
+PAGE_SIZE = 20
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -69,6 +69,7 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
     ],
     'DEFAULT_PAGINATION_CLASS': 'chats.pagination.MessagePagination',
+    'PAGE_SIZE': PAGE_SIZE,
 }
 
 ROOT_URLCONF = 'messaging_app.urls'
