@@ -28,7 +28,10 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
+AUTH_USER_MODEL = 'chats.User'
+
 # Application definition
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -62,6 +65,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ],
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 
 ROOT_URLCONF = 'messaging_app.urls'
