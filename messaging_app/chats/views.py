@@ -20,6 +20,10 @@ from .serializers import MessageSerializer
 from .permissions import IsOwnerOrReadOnly
 
 from .permissions import IsParticipantOfConversation
+from django_filters.rest_framework import DjangoFilterBackend
+from .pagination import MessagePagination
+from .filters import MessageFilter
+
 
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
