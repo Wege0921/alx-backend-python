@@ -11,7 +11,7 @@ class MessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Message
-        fields = ['message_id', 'sender', 'sender_name', 'message_body', 'sent_at']
+        fields = ['message_id', 'conversation', 'sender', 'sender_name', 'message_body', 'sent_at']
 
     def get_sender_name(self, obj):
         return obj.sender.username
