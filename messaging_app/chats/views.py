@@ -24,18 +24,18 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .pagination import MessagePagination
 from .filters import MessageFilter
 
-
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
+    pagination_class = MessagePagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = MessageFilter
 
     def get_queryset(self):
-        # Only show messages in conversations the user participates in
         return Message.objects.filter(conversation__participants=self.request.user)
 
     def perform_create(self, serializer):
-        # Extract conversation_id from request data
         conversation_id = self.request.data.get("conversation")
         if not conversation_id:
             raise PermissionDenied("Conversation ID is required.")
@@ -45,7 +45,6 @@ class MessageViewSet(viewsets.ModelViewSet):
         except Conversation.DoesNotExist:
             raise PermissionDenied("Conversation does not exist.")
 
-        # Check if user is a participant
         if self.request.user not in conversation.participants.all():
             raise PermissionDenied("You are not a participant of this conversation.")
 
@@ -62,6 +61,7 @@ class MessageViewSet(viewsets.ModelViewSet):
         if request.user not in instance.conversation.participants.all():
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
         return super().destroy(request, *args, **kwargs)
+
 
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
