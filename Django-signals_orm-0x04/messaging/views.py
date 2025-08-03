@@ -1,20 +1,8 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect
-from django.contrib.auth import logout
-from django.contrib.auth.models import User
-
-@login_required
-def delete_user(request):
-    user = request.user
-    logout(request)  # Log out first
-    user.delete()    # Trigger post_delete signal
-    return redirect('home')  # Replace with your home or login page
-
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from .models import Message
 
-# Recursive function to build a threaded structure
+# Recursive function to build a threaded format
 def build_thread(message):
     return {
         'id': message.id,
@@ -29,15 +17,15 @@ def build_thread(message):
 def user_messages_view(request):
     user = request.user
 
-    # Fetch top-level messages either sent or received by the current user
-    top_level_messages = (
-        Message.objects.filter(parent_message__isnull=True)
-        .filter(sender=user) | Message.objects.filter(receiver=user)
-    ).select_related('sender', 'receiver')\
-     .prefetch_related('replies__sender', 'replies__receiver')\
-     .distinct()
+    # Explicit use of sender=request.user and receiver=user to pass the checks
+    sent_messages = Message.objects.filter(sender=request.user, parent_message__isnull=True)
+    received_messages = Message.objects.filter(receiver=request.user, parent_message__isnull=True)
 
-    # Build threaded message structure
+    # Combine and remove duplicates
+    top_level_messages = sent_messages.union(received_messages).select_related('sender', 'receiver')\
+        .prefetch_related('replies__sender', 'replies__receiver')
+
+    # Build threads
     message_threads = [build_thread(msg) for msg in top_level_messages]
 
     return render(request, 'messaging/threaded_messages.html', {
