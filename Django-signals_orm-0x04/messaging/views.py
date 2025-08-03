@@ -31,3 +31,16 @@ def user_messages_view(request):
     return render(request, 'messaging/threaded_messages.html', {
         'message_threads': message_threads
     })
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import Message
+
+@login_required
+def unread_messages_view(request):
+    # ✅ Use Message.unread.unread_for_user and .only()
+    unread_messages = Message.unread.unread_for_user(request.user)
+
+    return render(request, 'messaging/unread_inbox.html', {
+        'unread_messages': unread_messages
+    })
