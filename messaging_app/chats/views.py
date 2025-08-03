@@ -87,3 +87,15 @@ class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated]
 
+from django.shortcuts import render, get_object_or_404
+from django.views.decorators.cache import cache_page
+from .models import Conversation, Message
+
+@cache_page(60)  # Cache for 60 seconds
+def conversation_detail(request, conversation_id):
+    conversation = get_object_or_404(Conversation, id=conversation_id)
+    messages = Message.objects.filter(conversation=conversation).select_related('sender', 'receiver')
+    return render(request, 'chats/conversation_detail.html', {
+        'conversation': conversation,
+        'messages': messages
+    })
