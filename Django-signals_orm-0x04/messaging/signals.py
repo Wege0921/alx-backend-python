@@ -22,3 +22,15 @@ def log_message_edit(sender, instance, **kwargs):
             instance.edited = True  # Mark as edited
     except Message.DoesNotExist:
         pass
+
+
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+from .models import MessageHistory, Message
+
+@receiver(post_delete, sender=User)
+def delete_user_related_data(sender, instance, **kwargs):
+    # Cleanup MessageHistory records where user was sender or receiver
+    MessageHistory.objects.filter(message__sender=instance).delete()
+    MessageHistory.objects.filter(message__receiver=instance).delete()
