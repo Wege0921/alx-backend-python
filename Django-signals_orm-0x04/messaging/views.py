@@ -1,6 +1,8 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from .models import Message
+from django.views.decorators.cache import cache_page
+
 
 # Recursive function to build a threaded format
 def build_thread(message):
@@ -44,3 +46,18 @@ def unread_messages_view(request):
     return render(request, 'messaging/unread_inbox.html', {
         'unread_messages': unread_messages
     })
+
+from django.shortcuts import render
+from django.views.decorators.cache import cache_page
+from .models import Message
+
+@cache_page(60)
+def cached_message_list(request):
+    messages = Message.objects.all()
+    return render(request, 'messaging/messages.html', {'messages': messages})
+
+@cache_page(60)
+def message_list_view(request):
+    # replace this with your actual queryset and rendering logic
+    messages = Message.objects.all()
+    return render(request, 'messaging/message_list.html', {'messages': messages})
