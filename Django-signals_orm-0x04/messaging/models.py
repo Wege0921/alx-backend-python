@@ -9,6 +9,7 @@ class Message(models.Model):
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     edited = models.BooleanField(default=False)
+    read = models.BooleanField(default=False)
     parent_message = models.ForeignKey(
         'self',
         null=True,
@@ -16,7 +17,11 @@ class Message(models.Model):
         on_delete=models.CASCADE,
         related_name='replies'
     )
+    objects = models.Manager()  # Default manager
+    unread = UnreadMessagesManager()  # ✅ Custom manager
 
+    def __str__(self):
+        return f"From {self.sender} to {self.receiver}"
     def __str__(self):
         if self.parent_message:
             return f"Reply by {self.sender} to Message {self.parent_message.id}"
