@@ -1,0 +1,10 @@
+from django.apps import AppConfig
+
+class MessagingConfig(AppConfig):
+    name = 'messaging'
+
+    def ready(self):
+        import messaging.signals  # Ensures the signals are registered
+
+def ready(self):
+    import messaging.signals
