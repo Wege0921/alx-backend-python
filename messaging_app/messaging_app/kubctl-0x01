@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Exit immediately if a command exits with a non-zero status
+set -e
+
+echo "Scaling Django app deployment to 3 replicas..."
+kubectl scale deployment django-messaging-deployment --replicas=3
+
+echo "Verifying running pods..."
+kubectl get pods -o wide
+
+echo "Performing load testing with wrk..."
+# Install wrk if not installed
+if ! command -v wrk &> /dev/null
+then
+    echo "wrk not found, installing..."
+    sudo apt-get update && sudo apt-get install -y wrk
+fi
+
+# Replace django.local with your ingress host or NodePort URL
+wrk -t2 -c100 -d30s http://django.local/api/
+
+echo "Monitoring resource usage..."
+kubectl top pods
+
+echo "Scaling operation complete!"
