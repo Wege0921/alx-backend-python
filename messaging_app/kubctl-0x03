@@ -1,0 +1,23 @@
+#!/bin/bash
+set -e
+
+echo "🔵 Starting Rolling Update for Blue deployment..."
+
+# Step 1: Apply updated deployment
+kubectl apply -f blue_deployment.yaml
+
+# Step 2: Monitor rollout status
+echo "📡 Monitoring rollout..."
+kubectl rollout status deployment/django-blue
+
+# Step 3: Continuously send requests during rollout to test downtime
+echo "🌐 Testing service availability during rollout..."
+for i in {1..20}
+do
+  curl -s http://django-service.default.svc.cluster.local/ || echo "Request failed!"
+  sleep 2
+done
+
+# Step 4: Verify pods
+echo "✅ Verifying updated pods..."
+kubectl get pods -l app=django,version=blue -o wide
