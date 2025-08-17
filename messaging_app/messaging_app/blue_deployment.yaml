@@ -6,11 +6,16 @@ metadata:
     app: django
     version: blue
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: django
       version: blue
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
   template:
     metadata:
       labels:
@@ -19,6 +24,6 @@ spec:
     spec:
       containers:
       - name: django-blue
-        image: your-dockerhub-username/django-messaging:blue
+        image: your-dockerhub-username/django-messaging:2.0   # <-- UPDATED VERSION
         ports:
         - containerPort: 8000
