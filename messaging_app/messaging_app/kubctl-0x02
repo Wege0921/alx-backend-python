@@ -1,0 +1,26 @@
+#!/bin/bash
+
+set -e
+
+echo "Deploying Blue version..."
+kubectl apply -f blue_deployment.yaml
+
+echo "Deploying Green version..."
+kubectl apply -f green_deployment.yaml
+
+echo "Applying shared Service..."
+kubectl apply -f kubeservice.yaml
+
+echo "Checking running pods..."
+kubectl get pods -o wide
+
+echo "Logs from Blue version:"
+BLUE_POD=$(kubectl get pods -l version=blue -o jsonpath="{.items[0].metadata.name}")
+kubectl logs $BLUE_POD || true
+
+echo "Logs from Green version:"
+GREEN_POD=$(kubectl get pods -l version=green -o jsonpath="{.items[0].metadata.name}")
+kubectl logs $GREEN_POD || true
+
+echo "Blue-Green deployment setup complete!"
+echo "👉 To switch traffic, edit kubeservice.yaml and change selector version=blue → version=green"
