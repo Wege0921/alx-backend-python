@@ -1,5 +1,7 @@
 pipeline {
     agent any
+    options { timestamps() }
+
     environment {
         VENV = '.venv'
         PYTHON = 'python3'
@@ -8,6 +10,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                // Pull source code from GitHub using credentials
                 git credentialsId: 'github-creds',
                     url: 'https://github.com/Wege0921/alx-backend-python.git',
                     branch: 'main'
@@ -18,14 +21,23 @@ pipeline {
             steps {
                 sh '''
                     set -eux
+                    # Check Python version
                     ${PYTHON} --version
+
+                    # Create a virtual environment
                     ${PYTHON} -m venv ${VENV}
                     . ${VENV}/bin/activate
+
+                    # Upgrade pip
                     python -m pip install --upgrade pip
+
+                    # Install dependencies from requirements.txt if exists
                     if [ -f messaging_app/requirements.txt ]; then
-                      pip install -r messaging_app/requirements.txt
+                        pip install -r messaging_app/requirements.txt
                     fi
-                    pip install pytest pytest-html
+
+                    # Install testing packages (pytest + pytest-html)
+                    pip install pytest pytest-html parameterized
                 '''
             }
         }
@@ -35,12 +47,17 @@ pipeline {
                 sh '''
                     set -eux
                     . ${VENV}/bin/activate
-                    pytest -q --junitxml=pytest-report.xml --html=pytest-report.html --self-contained-html
+
+                    # Run all tests in messaging_app
+                    pytest messaging_app --junitxml=pytest-report.xml --html=pytest-report.html --self-contained-html
                 '''
             }
             post {
                 always {
+                    // Publish JUnit test results
                     junit testResults: 'pytest-report.xml', allowEmptyResults: true
+
+                    // Archive artifacts (both XML and HTML)
                     archiveArtifacts artifacts: 'pytest-report.xml, pytest-report.html', allowEmptyArchive: true, fingerprint: true
                 }
             }
