@@ -1,46 +1,49 @@
 pipeline {
     agent any
-
     environment {
+        VENV = '.venv'
         PYTHON = 'python3'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git credentialsId: 'github-creds', url: 'https://github.com/your-username/alx-backend-python.git', branch: 'main'
+                git credentialsId: 'github-creds',
+                    url: 'https://github.com/Wege0921/alx-backend-python.git',
+                    branch: 'main'
             }
         }
 
-        stage('Set up Python Env') {
+        stage('Set up Python env') {
             steps {
-                // ShiningPanda virtualenv
                 sh '''
-                python3 -m venv venv
-                . venv/bin/activate
-                pip install --upgrade pip
-                pip install -r messaging_app/requirements.txt
+                    set -eux
+                    ${PYTHON} --version
+                    ${PYTHON} -m venv ${VENV}
+                    . ${VENV}/bin/activate
+                    python -m pip install --upgrade pip
+                    if [ -f messaging_app/requirements.txt ]; then
+                      pip install -r messaging_app/requirements.txt
+                    fi
+                    pip install pytest pytest-html
                 '''
             }
         }
 
-        stage('Run Tests') {
+        stage('Run tests') {
             steps {
                 sh '''
-                . venv/bin/activate
-                pytest --junitxml=pytest-report.xml
+                    set -eux
+                    . ${VENV}/bin/activate
+                    pytest -q --junitxml=pytest-report.xml --html=pytest-report.html --self-contained-html
                 '''
             }
-        }
-
-        stage('Publish Report') {
-            steps {
-                junit 'pytest-report.xml'
+            post {
+                always {
+                    junit testResults: 'pytest-report.xml', allowEmptyResults: true
+                    archiveArtifacts artifacts: 'pytest-report.xml, pytest-report.html', allowEmptyArchive: true, fingerprint: true
+                }
             }
         }
-    }
-
-    triggers {
-        // Manual trigger only (remove SCM polling or cron triggers)
     }
 }
