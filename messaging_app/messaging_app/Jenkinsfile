@@ -21,23 +21,24 @@ pipeline {
             steps {
                 sh '''
                     set -eux
-                    # Check Python version
+
+                    # Ensure correct Python version
                     ${PYTHON} --version
 
-                    # Create a virtual environment
+                    # Create virtual environment
                     ${PYTHON} -m venv ${VENV}
                     . ${VENV}/bin/activate
 
-                    # Upgrade pip
-                    python -m pip install --upgrade pip
+                    # Upgrade pip using pip3
+                    pip3 install --upgrade pip
 
-                    # Install dependencies from requirements.txt if exists
+                    # Install dependencies from requirements.txt if it exists
                     if [ -f messaging_app/requirements.txt ]; then
-                        pip install -r messaging_app/requirements.txt
+                        pip3 install -r messaging_app/requirements.txt
                     fi
 
-                    # Install testing packages (pytest + pytest-html)
-                    pip install pytest pytest-html parameterized
+                    # Install testing packages explicitly with pip3
+                    pip3 install pytest pytest-html parameterized
                 '''
             }
         }
