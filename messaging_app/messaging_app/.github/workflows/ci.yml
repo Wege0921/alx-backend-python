@@ -1,0 +1,78 @@
+name: Django CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_pass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping --silent"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: 3306
+      MYSQL_DB: test_db
+      MYSQL_USER: test_user
+      MYSQL_PASSWORD: test_pass
+      PYTHONUNBUFFERED: 1
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r messaging_app/requirements.txt
+        pip install pytest pytest-django pytest-html parameterized
+
+    - name: Wait for MySQL service
+      run: |
+        for i in {1..30}; do
+          if mysql -h $MYSQL_HOST -P $MYSQL_PORT -u $MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DB -e "SELECT 1"; then
+            echo "MySQL is ready"
+            break
+          fi
+          echo "Waiting for MySQL..."
+          sleep 2
+        done
+
+    - name: Run Django migrations
+      run: |
+        cd messaging_app
+        python manage.py migrate
+
+    - name: Run tests with pytest
+      run: |
+        cd messaging_app
+        pytest --junitxml=pytest-report.xml --html=pytest-report.html --self-contained-html
+
+    - name: Upload test reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: pytest-reports
+        path: messaging_app/{pytest-report.xml,pytest-report.html}
