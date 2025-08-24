@@ -5,17 +5,17 @@ pipeline {
     environment {
         VENV = '.venv'
         PYTHON = 'python3'
+        IMAGE_NAME = 'your-dockerhub-username/messaging-app:latest'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Pull source code from GitHub using credentials
                 git credentialsId: 'github-creds',
                     url: 'https://github.com/Wege0921/alx-backend-python.git',
                     branch: 'main'
 
-                // Explicitly show current git branch (required for automated checks)
+                // Show current git branch
                 sh 'git branch'
             }
         }
@@ -24,23 +24,13 @@ pipeline {
             steps {
                 sh '''
                     set -eux
-
-                    # Check Python version
                     ${PYTHON} --version
-
-                    # Create virtual environment
                     ${PYTHON} -m venv ${VENV}
                     . ${VENV}/bin/activate
-
-                    # Upgrade pip using pip3
                     pip3 install --upgrade pip
-
-                    # Install dependencies from requirements.txt if it exists
                     if [ -f messaging_app/requirements.txt ]; then
                         pip3 install -r messaging_app/requirements.txt
                     fi
-
-                    # Install testing packages explicitly with pip3
                     pip3 install pytest pytest-html parameterized
                 '''
             }
@@ -51,18 +41,35 @@ pipeline {
                 sh '''
                     set -eux
                     . ${VENV}/bin/activate
-
-                    # Run all tests in messaging_app
                     pytest messaging_app --junitxml=pytest-report.xml --html=pytest-report.html --self-contained-html
                 '''
             }
             post {
                 always {
-                    // Publish JUnit test results
                     junit testResults: 'pytest-report.xml', allowEmptyResults: true
-
-                    // Archive artifacts (both XML and HTML)
                     archiveArtifacts artifacts: 'pytest-report.xml, pytest-report.html', allowEmptyArchive: true, fingerprint: true
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh '''
+                        cd messaging_app
+                        docker build -t ${IMAGE_NAME} .
+                    '''
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker push ${IMAGE_NAME}
+                    '''
                 }
             }
         }
